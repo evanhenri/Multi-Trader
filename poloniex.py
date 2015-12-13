@@ -1,5 +1,4 @@
 from . import _apitools
-from utility import common
 
 import requests
 import time
@@ -35,16 +34,16 @@ def ask_orders(currency_pair):
 
 def trade_history(currency_pair, start, end):
     payload = {'currencyPair':currency_pair.upper(),
-               'start':common.date_to_unix_timestamp(start),
-               'end':common.date_to_unix_timestamp(end)}
+               'start':_apitools.date_to_unix_timestamp(start),
+               'end':_apitools.date_to_unix_timestamp(end)}
     return public_api_request('returnTradeHistory', payload)
 
 def chart_data(currency_pair, period, start, end):
     valid_periods = ['300', '900', '1800', '7200', '14400', '86400']
     if str(period) in valid_periods:
         payload = {'currencyPair':currency_pair.upper(),
-                   'start':common.date_to_unix_timestamp(start),
-                   'end':common.date_to_unix_timestamp(end), 'period':period}
+                   'start':_apitools.date_to_unix_timestamp(start),
+                   'end':_apitools.date_to_unix_timestamp(end), 'period':period}
         return public_api_request('returnChartData', payload)
     else:
         print('Invalid arg \'{arg}\', valid periods: {lst}'.format(arg=period, lst=[p for p in valid_periods]))
@@ -89,8 +88,8 @@ class TradeAPI(object):
         return self.trade_api_request('generateNewAddress', {'currency':currency.upper()})
 
     def deposits_withdrawals(self, start, end=time.time()):
-        start = str(common.date_to_unix_timestamp(start))
-        end = str(common.date_to_unix_timestamp(end))
+        start = str(_apitools.date_to_unix_timestamp(start))
+        end = str(_apitools.date_to_unix_timestamp(end))
         return self.trade_api_request('returnDepositsWithdrawals', {'start':start, 'end':end})
 
     def open_order(self, currency_pair='all'):
@@ -99,8 +98,8 @@ class TradeAPI(object):
     def trade_history(self, currency_pair='all', start=None, end=time.time()):
         params = {'currencyPair':currency_pair.upper()}
         if start:
-            params['start'] = str(common.date_to_unix_timestamp(start))
-            params['end'] = str(common.date_to_unix_timestamp(end))
+            params['start'] = str(_apitools.date_to_unix_timestamp(start))
+            params['end'] = str(_apitools.date_to_unix_timestamp(end))
         return self.trade_api_request('returnTradeHistory', params)
 
     def buy(self, currency_pair, rate, amount):
@@ -132,7 +131,7 @@ class TradeAPI(object):
             sell_quantity = balance
         bids = bid_orders(currency_pair.upper())
         bids.sort(key=lambda x: Decimal(x[0]))
-        bids = [(common.truncate_decimal(rate, 8), common.truncate_decimal(qty, 8),) for rate,qty in bids]
+        bids = [(_apitools.truncate_decimal(rate, 8), _apitools.truncate_decimal(qty, 8),) for rate,qty in bids]
 
         while sell_quantity > 0 and len(bids) > 0:
             top_bid = bids.pop()

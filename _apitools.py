@@ -3,6 +3,7 @@ import re
 import json
 import hmac
 import hashlib
+from decimal import Decimal
 from datetime import datetime
 from collections import deque
 from requests.auth import AuthBase
@@ -103,3 +104,9 @@ def date_to_unix_timestamp(date):
         return float(date)
     else:
         return date_to_timestamp(date)
+
+def truncate_decimal(d, n):
+    if '.' in str(d):
+        pre_split, post_split = str(d).split('.', 1)
+        d = Decimal(('.'.join((pre_split, post_split[:n]))))
+    return d
