@@ -1,48 +1,54 @@
+from . import _apitools
 import requests
 
-from exchange import Exchange
-import api_util
+def public_api_request(command, payload=[]):
+    public_api_url = 'https://btc-e.com/api/3/'
+    for param in payload:
+        command += '/' + param
+    return requests.get(public_api_url + command).text
+def exchange_info():
+    return public_api_request('info')
+def ticker(currency_pair):
+    return public_api_request('ticker', [currency_pair.lower()])
+def depth(currency_pair):
+    return public_api_request('depth', [currency_pair.lower()])
+def trade_history(currency_pair):
+    return public_api_request('trades', [currency_pair.lower()])
 
-class TradeAPI(Exchange):
-    def __init__(self):
-        super(TradeAPI, self).__init__('btc-e')
+class TradeAPI(object):
+    def __init__(self, api_key, api_secret, nonce_path):
+        self.api_key = api_key.encode('utf-8')
+        self.api_secret = api_secret.encode('utf-8')
+        self.nonce_path = nonce_path
         self.trade_api_url = 'https://btc-e.com/tapi'
+        self.session = requests.Session()
+
     def trade_api_request(self, command, payload={}):
         payload['method'] = command
-        resp = self.session.post(self.trade_api_url, data=payload, auth=api_util.Auth(self.key, self.secret, self.exchange_name))
+        nonce = _apitools.get_nonce(self.nonce_path)
+        resp = self.session.post(self.trade_api_url, data=payload, auth=_apitools.Auth(self.api_key, self.api_secret, nonce))
         response = resp.json()
         return response
-    def getInfo(self):
+
+    def user_info(self):
         return self.trade_api_request('getInfo')
-    def TransHistory(self):
+
+    def tx_history(self):
         return self.trade_api_request('TransHistory')
-    def TradeHistory(self):
+
+    def trade_history(self):
         return self.trade_api_request('TradeHistory')
-    def ActiveOrders(self, pair=None):
+
+    def active_orders(self, pair=None):
         params = {}
         if pair: params['pair'] = pair
         return self.trade_api_request('ActiveOrders', params)
-    def Trade(self, pair, trade_type, rate, amount):
-        return self.trade_api_request('Trade', {'pair':pair,
-                                                'type':trade_type,
-                                                'rate':rate,
-                                                'amount':amount})
-    def CancelOrder(self, order_id):
+
+    def buy(self, pair, rate, amount):
+        return self.trade_api_request('Trade', {'pair':pair,'type':'buy','rate':rate,'amount':amount})
+
+    def sell(self, pair, rate, amount):
+        return self.trade_api_request('Trade', {'pair':pair,'type':'sell','rate':rate,'amount':amount})
+
+    def cancel_order(self, order_id):
         return self.trade_api_request('CancelOrder', {'order_id':order_id})
-
-class PublicAPI(object):
-    def __init__(self):
-        self.public_api_url = 'https://btc-e.com/api/3/'
-
-    def public_api_request(self, command, payload=[]):
-        for param in payload:
-            command += '/' + param
-        return requests.get(self.public_api_url + command).text
-    def info(self):
-        return self.public_api_request('info')
-    def ticker(self, currency_pair):
-        return self.public_api_request('ticker', [currency_pair.lower()])
-    def depth(self, currency_pair):
-        return self.public_api_request('depth', [currency_pair.lower()])
-    def trades(self, currency_pair):
-        return self.public_api_request('trades', [currency_pair.lower()])
