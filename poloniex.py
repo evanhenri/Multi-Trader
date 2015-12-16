@@ -77,7 +77,7 @@ class TradeAPI(object):
             resp = self.session.post(self.trade_api_url,
                                      data=payload,
                                      auth=_apitools.Auth(self.api_key, self.api_secret, nonce),
-                                     timeout=0.001)
+                                     timeout=10)
             return resp.json()
         except requests.Timeout as e:
             print('Post timeout', e.args)
