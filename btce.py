@@ -5,7 +5,15 @@ def public_api_request(command, payload=[]):
     public_api_url = 'https://btc-e.com/api/3/'
     for param in payload:
         command += '/' + param
-    return requests.get(public_api_url + command).text
+    try:
+        resp = requests.get(public_api_url + command).text
+        return resp
+    except requests.Timeout as e:
+        print('Post timeout', e.args)
+    except requests.ConnectionError as e:
+        print('Unable to connect to network', e.args)
+    exit()
+
 def exchange_info():
     return public_api_request('info')
 def ticker(currency_pair):
@@ -26,9 +34,17 @@ class TradeAPI(object):
     def trade_api_request(self, command, payload={}):
         payload['method'] = command
         nonce = _apitools.get_nonce(self.nonce_path)
-        resp = self.session.post(self.trade_api_url, data=payload, auth=_apitools.Auth(self.api_key, self.api_secret, nonce))
-        response = resp.json()
-        return response
+        try:
+            resp = self.session.post(self.trade_api_url,
+                                     data=payload,
+                                     auth=_apitools.Auth(self.api_key, self.api_secret, nonce))
+            response = resp.json()
+            return response
+        except requests.Timeout as e:
+            print('Post timeout', e.args)
+        except requests.ConnectionError as e:
+            print('Unable to connect to network', e.args)
+        exit()
 
     def user_info(self):
         return self.trade_api_request('getInfo')

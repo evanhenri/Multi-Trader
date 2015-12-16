@@ -10,7 +10,14 @@ def public_api_request(command, payload={}):
     public_api_url = 'http://poloniex.com/public?command='
     for k, v in payload.items():
         command += '&' + str(k) + '=' + str(v)
-    return json.loads(requests.get(public_api_url + command).text)
+    try:
+        resp = json.loads(requests.get(public_api_url + command).text)
+        return resp
+    except requests.Timeout as e:
+        print('Post timeout', e.args)
+    except requests.ConnectionError as e:
+        print('Unable to connect to network', e.args)
+    exit()
 
 def ticker():
     return public_api_request('returnTicker')
@@ -66,8 +73,17 @@ class TradeAPI(object):
     def trade_api_request(self, command, payload={}):
         payload['command'] = command
         nonce = _apitools.get_nonce(self.nonce_path)
-        resp = self.session.post(self.trade_api_url, data=payload, auth=_apitools.Auth(self.api_key, self.api_secret, nonce))
-        return resp.json()
+        try:
+            resp = self.session.post(self.trade_api_url,
+                                     data=payload,
+                                     auth=_apitools.Auth(self.api_key, self.api_secret, nonce),
+                                     timeout=0.001)
+            return resp.json()
+        except requests.Timeout as e:
+            print('Post timeout', e.args)
+        except requests.ConnectionError as e:
+            print('Unable to connect to network', e.args)
+        exit()
 
     def balances(self):
         return self.trade_api_request('returnBalances')
