@@ -6,7 +6,7 @@ def public_api_request(command, payload=[]):
     for param in payload:
         command += '/' + param
     try:
-        resp = requests.get(public_api_url + command).text
+        resp = requests.get(public_api_url + command, timeout=10).text
         return resp
     except requests.Timeout as e:
         print('Post timeout', e.args)
@@ -37,7 +37,8 @@ class TradeAPI(object):
         try:
             resp = self.session.post(self.trade_api_url,
                                      data=payload,
-                                     auth=_apitools.Auth(self.api_key, self.api_secret, nonce))
+                                     auth=_apitools.Auth(self.api_key, self.api_secret, nonce),
+                                     timeout=10)
             response = resp.json()
             return response
         except requests.Timeout as e:

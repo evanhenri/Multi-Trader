@@ -11,7 +11,7 @@ def public_api_request(command, payload={}):
     for k, v in payload.items():
         command += '&' + str(k) + '=' + str(v)
     try:
-        resp = json.loads(requests.get(public_api_url + command).text)
+        resp = json.loads(requests.get(public_api_url + command, timeout=10).text)
         return resp
     except requests.Timeout as e:
         print('Post timeout', e.args)
